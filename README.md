@@ -30,7 +30,7 @@ JUnit 5 + Testcontainers, Docker Compose.
 
 ## Running
 
-Requirements: Docker with Compose (or Podman Compose).
+Requirements: Docker with Compose.
 
 ```bash
 docker compose up -d --build
