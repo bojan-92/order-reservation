@@ -1,0 +1,68 @@
+spring:
+  application:
+    name: order-api
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/order_db
+    username: orders
+    password: orders
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+    properties:
+      hibernate.jdbc.time_zone: UTC
+
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: app
+    password: app
+    publisher-confirm-type: correlated
+    publisher-returns: true
+    template:
+      mandatory: true
+    listener:
+      simple:
+        default-requeue-rejected: false
+        retry:
+          enabled: true
+          max-retries: 3
+          initial-interval: 1s
+          multiplier: 2.0
+          max-interval: 10s
+  mvc:
+    problemdetails:
+      enabled: true
+
+server:
+  shutdown: graceful
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: always
+
+app:
+  messaging:
+    exchange: orders.exchange
+    order-placed-routing-key: order.placed
+    inventory-exchange: inventory.exchange
+    reservation-result-routing-key: reservation.result
+    reservation-results-queue: order-api.reservation-results
+    dead-letter-exchange: order-api.dlx
+    reservation-results-dlq: order-api.reservation-results.dlq
+  outbox:
+    relay-interval-ms: 1000
+    max-backoff-ms: 60000
+    batch-size: 100
+    confirm-timeout-ms: 5000
+
+logging:
+  pattern:
+    level: "%5p [%X{correlationId:-}]"

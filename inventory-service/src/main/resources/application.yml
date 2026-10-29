@@ -1,0 +1,74 @@
+spring:
+  application:
+    name: inventory-service
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/inventory_db
+    username: inventory
+    password: inventory
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+    properties:
+      hibernate.jdbc.time_zone: UTC
+
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: app
+    password: app
+    publisher-confirm-type: correlated
+    publisher-returns: true
+    template:
+      mandatory: true
+    listener:
+      simple:
+        # Safe to run in parallel: stock is decremented with a conditional UPDATE and
+        # duplicates are caught by the reservations primary key.
+        concurrency: 2
+        max-concurrency: 4
+        prefetch: 20
+        default-requeue-rejected: false
+        retry:
+          enabled: true
+          max-retries: 3
+          initial-interval: 1s
+          multiplier: 2.0
+          max-interval: 10s
+  mvc:
+    problemdetails:
+      enabled: true
+
+server:
+  port: 8081
+  shutdown: graceful
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: always
+
+app:
+  messaging:
+    orders-exchange: orders.exchange
+    order-placed-routing-key: order.placed
+    order-placed-queue: inventory.order-placed
+    dead-letter-exchange: inventory.dlx
+    order-placed-dlq: inventory.order-placed.dlq
+    inventory-exchange: inventory.exchange
+    reservation-result-routing-key: reservation.result
+  outbox:
+    relay-interval-ms: 1000
+    max-backoff-ms: 60000
+    batch-size: 100
+    confirm-timeout-ms: 5000
+
+logging:
+  pattern:
+    level: "%5p [%X{correlationId:-}]"
