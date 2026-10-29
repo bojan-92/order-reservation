@@ -7,6 +7,9 @@ import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.Instant;
 
+/**
+ * An accepted order and its reservation status.
+ */
 @Entity
 @Table(name = "orders")
 @Getter
@@ -16,9 +19,6 @@ import java.time.Instant;
 @Builder
 public class Order {
 
-    /**
-     * Client-supplied id; doubles as the idempotency key for POST /orders.
-     */
     @Id
     @Column(length = 64)
     private String orderId;

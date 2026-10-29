@@ -7,6 +7,9 @@ import org.hibernate.annotations.CreationTimestamp;
 import java.time.Instant;
 import java.util.UUID;
 
+/**
+ * Event waiting to be published, written in the same transaction as the business change (transactional outbox).
+ */
 @Entity
 @Table(name = "outbox_events")
 @Getter

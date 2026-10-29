@@ -24,8 +24,8 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * Polls the outbox and publishes events in creation order. An event is marked published only after
- * the broker confirms it and it was routed to a queue, so delivery is at-least-once; consumers dedupe
- * by messageId / orderId.
+ * the broker confirms it and it was routed to a queue, so delivery is at-least-once; order-api ignores
+ * results for orders that are already final.
  * <p>
  * Each batch is claimed with {@code FOR UPDATE SKIP LOCKED} inside one transaction, so several instances
  * can run the relay side by side without publishing the same event twice.
@@ -44,6 +44,15 @@ public class OutboxRelay {
     private int consecutiveFailures;
     private Instant retryAt = Instant.EPOCH;
 
+    /**
+     * Creates the relay and registers its counters.
+     *
+     * @param outboxRepository outbox storage
+     * @param rabbitTemplate   template with publisher confirms and mandatory routing enabled
+     * @param transactions     runs each batch in one transaction so row locks are held while publishing
+     * @param appProperties    topology names and relay tuning
+     * @param meterRegistry    registry for the published and failure counters
+     */
     public OutboxRelay(OutboxRepository outboxRepository, RabbitTemplate rabbitTemplate, TransactionOperations transactions,
                        AppProperties appProperties, MeterRegistry meterRegistry) {
         this.outboxRepository = outboxRepository;
@@ -55,6 +64,10 @@ public class OutboxRelay {
         this.failureCounter = meterRegistry.counter("outbox.publish.failures");
     }
 
+    /**
+     * Claims the next batch of unpublished events and publishes them in order. Stops at the first failure,
+     * leaving the rest for the next run, and skips runs while backing off.
+     */
     @Scheduled(fixedDelayString = "${app.outbox.relay-interval-ms}")
     public void publishPending() {
         if (Instant.now().isBefore(retryAt)) {
@@ -69,6 +82,12 @@ public class OutboxRelay {
         });
     }
 
+    /**
+     * Publishes one event and marks it published, or records the failure.
+     *
+     * @param event locked outbox event
+     * @return {@code true} if published, {@code false} if the batch should stop
+     */
     private boolean publish(OutboxEvent event) {
         try (var ignored = CorrelationId.bind(event.getCorrelationId())) {
             try {
@@ -91,6 +110,13 @@ public class OutboxRelay {
         }
     }
 
+    /**
+     * Records a failed attempt on the event and schedules the next run with exponential backoff, capped at
+     * {@code maxBackoffMs}.
+     *
+     * @param event event that failed to publish
+     * @param e     cause of the failure
+     */
     private void onFailure(OutboxEvent event, Exception e) {
         failureCounter.increment();
         event.setAttempts(event.getAttempts() + 1);
@@ -103,6 +129,12 @@ public class OutboxRelay {
                 event.getEventType(), event.getAggregateId(), event.getAttempts(), backoffMs, e.getMessage());
     }
 
+    /**
+     * Sends the event and waits for the broker's publisher confirm.
+     *
+     * @param event event to send
+     * @throws Exception if the broker nacks, the message is unroutable, or the confirm times out
+     */
     private void send(OutboxEvent event) throws Exception {
         CorrelationData correlation = new CorrelationData(event.getId().toString());
         rabbitTemplate.send(messaging.inventoryExchange(), messaging.reservationResultRoutingKey(), toMessage(event), correlation);
@@ -116,6 +148,13 @@ public class OutboxRelay {
         }
     }
 
+    /**
+     * Builds a persistent AMQP message. The outbox row id becomes the messageId, so consumers can de-duplicate
+     * redeliveries.
+     *
+     * @param event outbox event
+     * @return the message
+     */
     private Message toMessage(OutboxEvent event) {
         return MessageBuilder.withBody(event.getPayload().getBytes(StandardCharsets.UTF_8))
                 .setContentType(MessageProperties.CONTENT_TYPE_JSON)
@@ -129,6 +168,12 @@ public class OutboxRelay {
                 .build();
     }
 
+    /**
+     * Truncates text to fit the {@code last_error} column.
+     *
+     * @param s text to truncate
+     * @return at most 500 characters
+     */
     private static String truncate(String s) {
         return s.length() <= 500 ? s : s.substring(0, 500);
     }

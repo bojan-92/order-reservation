@@ -18,6 +18,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import tools.jackson.databind.ObjectMapper;
 
+/**
+ * Reservation use cases: reserving stock for placed orders and looking up the outcome.
+ */
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -30,12 +33,11 @@ public class ReservationService {
     private final MeterRegistry meterRegistry;
 
     /**
-     * Reserves stock for an order exactly once. The stock change, the reservation record and the result event
-     * are committed in one transaction (transactional outbox), so a redelivered OrderPlaced either finds the
-     * reservation and is skipped, or the previous attempt rolled back completely and is redone.
-     * <p>
-     * Two concurrent deliveries of the same order both pass the existence check, but only one can insert the
-     * reservation row; the other fails on the primary key, is retried by the listener and is then skipped.
+     * Reserves stock for the order, or rejects it, and saves the result event in the same transaction
+     * (transactional outbox). An order that was already processed is skipped, so redelivered events are harmless.
+     *
+     * @param event     validated OrderPlaced event
+     * @param messageId broker message id, stored for tracing
      */
     @Transactional
     public void reserve(OrderPlacedEvent event, String messageId) {
@@ -70,6 +72,13 @@ public class ReservationService {
                 reserved ? "" : ", reason=" + reservation.getReason());
     }
 
+    /**
+     * Looks up the reservation outcome for an order.
+     *
+     * @param orderId order id from the OrderPlaced event
+     * @return the reservation
+     * @throws NotFoundException if the order hasn't been processed
+     */
     @Transactional(readOnly = true)
     public ReservationResponse getReservation(String orderId) {
         return reservationRepository.findById(orderId)
@@ -77,6 +86,13 @@ public class ReservationService {
                 .orElseThrow(() -> new NotFoundException("No reservation for order '" + orderId + "'"));
     }
 
+    /**
+     * Works out why stock could not be reserved.
+     *
+     * @param itemId requested item
+     * @return {@link Reservation#REASON_INSUFFICIENT_STOCK} if the item exists, otherwise
+     * {@link Reservation#REASON_UNKNOWN_ITEM}
+     */
     private String rejectionReason(String itemId) {
         return stockRepository.existsById(itemId)
                 ? Reservation.REASON_INSUFFICIENT_STOCK

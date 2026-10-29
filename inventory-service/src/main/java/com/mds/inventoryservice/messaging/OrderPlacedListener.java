@@ -14,10 +14,8 @@ import tools.jackson.core.JacksonException;
 import tools.jackson.databind.ObjectMapper;
 
 /**
- * Validates incoming OrderPlaced messages and hands them to the reservation logic.
- * <p>
- * Failure handling: {@link InvalidEventException} is dead-lettered immediately; anything else (DB down,
- * concurrent duplicate) is retried with backoff and dead-lettered once retries are exhausted.
+ * Consumes OrderPlaced events from order-api and reserves stock for them. Invalid messages throw
+ * {@link InvalidEventException} and are dead-lettered without retries.
  */
 @Slf4j
 @Component
@@ -29,6 +27,12 @@ public class OrderPlacedListener {
     private final ObjectMapper objectMapper;
     private final ReservationService reservationService;
 
+    /**
+     * Handles one OrderPlaced event, with the producer's correlation id bound for logging.
+     *
+     * @param message raw AMQP message
+     * @throws InvalidEventException if the message can never be processed
+     */
     @RabbitListener(queues = "${app.messaging.order-placed-queue}")
     public void onOrderPlaced(Message message) {
         MessageProperties props = message.getMessageProperties();
@@ -41,6 +45,13 @@ public class OrderPlacedListener {
         }
     }
 
+    /**
+     * Checks the message type and schema version, then parses and validates the payload.
+     *
+     * @param message raw AMQP message
+     * @return the parsed event
+     * @throws InvalidEventException if any check fails
+     */
     private OrderPlacedEvent parse(Message message) {
         MessageProperties props = message.getMessageProperties();
 
@@ -69,6 +80,12 @@ public class OrderPlacedListener {
         return event;
     }
 
+    /**
+     * Checks that an id is present and fits the database column.
+     *
+     * @param id id from the payload
+     * @return {@code true} if the id is non-blank and at most 64 characters
+     */
     private static boolean validId(String id) {
         return id != null && !id.isBlank() && id.length() <= MAX_ID_LENGTH;
     }

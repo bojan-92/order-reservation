@@ -5,6 +5,16 @@ import com.mds.inventoryservice.model.ReservationStatus;
 
 import java.time.Instant;
 
+/**
+ * Reservation as returned by the REST API.
+ *
+ * @param orderId   order the reservation belongs to
+ * @param itemId    requested item
+ * @param quantity  requested units
+ * @param status    whether stock was reserved
+ * @param reason    why the reservation was rejected, if it was
+ * @param createdAt when the order was processed
+ */
 public record ReservationResponse(
         String orderId,
         String itemId,

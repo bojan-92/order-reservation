@@ -5,13 +5,18 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 
+/**
+ * Stock storage, keyed by {@code itemId}.
+ */
 public interface StockRepository extends JpaRepository<StockItem, String> {
 
     /**
-     * Check-and-decrement in a single statement: the row lock taken by UPDATE serialises concurrent
-     * reservations for the same item, so stock can never go negative or be oversold.
+     * Takes the quantity from stock only if enough is available. Checking and subtracting in one statement
+     * means two orders for the same item can't both take the last units.
      *
-     * @return 1 if the stock was reserved, 0 if the item is unknown or has too little stock
+     * @param itemId   item to reserve
+     * @param quantity units to take
+     * @return 1 if reserved, 0 if the item doesn't exist or has too little stock
      */
     @Modifying
     @Query(value = """

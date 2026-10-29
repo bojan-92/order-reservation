@@ -7,9 +7,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-/**
- * Read-only view of stock levels. Stock changes only through OrderPlaced events.
- */
 @RestController
 @RequestMapping("/stock-items")
 @RequiredArgsConstructor

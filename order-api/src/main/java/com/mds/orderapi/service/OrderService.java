@@ -20,6 +20,9 @@ import tools.jackson.databind.ObjectMapper;
 
 import java.util.Optional;
 
+/**
+ * Order use cases: placing orders and applying reservation results from the inventory service.
+ */
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -31,7 +34,11 @@ public class OrderService {
 
     /**
      * Saves the order and its OrderPlaced event in one transaction (transactional outbox),
-     * so an accepted order is never lost and never published without being stored.
+     * so an accepted order is never lost and never published without being stored. If the {@code orderId}
+     * already exists, the stored order is returned and nothing is published again.
+     *
+     * @param request validated order payload
+     * @return the new or already stored order
      */
     @Transactional
     public OrderResponse placeOrder(CreateOrderRequest request) {
@@ -60,6 +67,13 @@ public class OrderService {
         return OrderResponse.from(order);
     }
 
+    /**
+     * Looks up an order.
+     *
+     * @param orderId client-supplied order id
+     * @return the order
+     * @throws OrderNotFoundException if no order has this id
+     */
     @Transactional(readOnly = true)
     public OrderResponse getOrder(String orderId) {
         return orderRepository.findById(orderId)
@@ -67,6 +81,13 @@ public class OrderService {
                 .orElseThrow(() -> new OrderNotFoundException(orderId));
     }
 
+    /**
+     * Moves a pending order to {@code RESERVED} or {@code REJECTED}. Results for orders that are already
+     * final are ignored, so redelivered messages are harmless.
+     *
+     * @param event reservation result from the inventory service
+     * @throws InvalidEventException if the order doesn't exist
+     */
     @Transactional
     public void applyReservationResult(ReservationResultEvent event) {
         Order order = orderRepository.findById(event.orderId())

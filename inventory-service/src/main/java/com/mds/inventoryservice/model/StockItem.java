@@ -6,6 +6,9 @@ import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.Instant;
 
+/**
+ * An item and the number of units still available to reserve.
+ */
 @Entity
 @Table(name = "stock_items")
 @Getter

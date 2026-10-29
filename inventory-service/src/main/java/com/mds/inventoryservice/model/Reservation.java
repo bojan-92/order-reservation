@@ -6,6 +6,9 @@ import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.Instant;
 
+/**
+ * The outcome of processing one order: stock reserved, or rejected with a reason.
+ */
 @Entity
 @Table(name = "reservations")
 @Getter
@@ -15,12 +18,11 @@ import java.time.Instant;
 @Builder
 public class Reservation {
 
+    /** Rejection reason: the item exists but has fewer units than requested. */
     public static final String REASON_INSUFFICIENT_STOCK = "INSUFFICIENT_STOCK";
+    /** Rejection reason: no stock item exists with the requested id. */
     public static final String REASON_UNKNOWN_ITEM = "UNKNOWN_ITEM";
 
-    /**
-     * One reservation per order; the primary key is the consumer's idempotency guard.
-     */
     @Id
     @Column(length = 64)
     private String orderId;
@@ -37,19 +39,12 @@ public class Reservation {
 
     private String reason;
 
-    /**
-     * Broker messageId of the OrderPlaced event that produced this reservation, for tracing.
-     */
     private String messageId;
 
     @CreationTimestamp
     @Column(nullable = false, updatable = false)
     private Instant createdAt;
 
-    /**
-     * Null on new instances, so Spring Data persists (INSERT) instead of merging. A concurrent duplicate then
-     * fails on the primary key rather than silently overwriting the first reservation.
-     */
     @Version
     private Long version;
 }

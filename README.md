@@ -123,7 +123,8 @@ duplicated, and neither assumes it can be lost.
   log line of both services. Prometheus metrics cover published and failed events, outbox backlog and age,
   and reservation outcomes.
 
-More detail on the inventory side: [inventory-service/README.md](inventory-service/README.md).
+More detail per service: [order-api/README.md](order-api/README.md) and
+[inventory-service/README.md](inventory-service/README.md).
 
 ## Assumptions and simplifications
 

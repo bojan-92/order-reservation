@@ -1,14 +1,26 @@
 package com.mds.inventoryservice.exception;
 
 /**
- * A message that can never be processed successfully (wrong type, schema, or payload). Not retried; dead-lettered.
+ * An incoming event can never be processed (wrong type or schema version, malformed payload, invalid fields).
+ * It isn't retried; the message goes straight to the dead-letter queue.
  */
 public class InvalidEventException extends RuntimeException {
 
+    /**
+     * Creates the exception.
+     *
+     * @param message why the event is invalid
+     */
     public InvalidEventException(String message) {
         super(message);
     }
 
+    /**
+     * Creates the exception with the underlying cause.
+     *
+     * @param message why the event is invalid
+     * @param cause   underlying parsing error
+     */
     public InvalidEventException(String message, Throwable cause) {
         super(message, cause);
     }
