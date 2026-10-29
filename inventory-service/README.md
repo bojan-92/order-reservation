@@ -1,7 +1,7 @@
 # inventory-service
 
 Consumes `OrderPlaced` events from `order-api`, reserves stock, and publishes an
-`InventoryReservationResult` (`RESERVED` / `REJECTED` + reason) back to order-api.
+`InventoryReservationResult` (`RESERVED` / `REJECTED` + reason) back to `order-api`.
 
 ## Running
 
