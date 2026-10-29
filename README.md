@@ -43,6 +43,7 @@ docker compose ps                     # wait until all four containers are "heal
 | inventory-service | http://localhost:8081 (health: `/actuator/health`)                    |
 | RabbitMQ UI       | http://localhost:15672 (user `app`, password `app`)                   |
 | Metrics           | `/actuator/prometheus` on both services                               |
+| API docs          | `/swagger-ui.html` (Swagger UI) and `/v3/api-docs` (OpenAPI JSON) on both services |
 
 Stop with `docker compose down`. Add `-v` to also delete the database volume; on the next start
 `docker/postgres/init.sql` runs again and Flyway recreates the schema and seed data.

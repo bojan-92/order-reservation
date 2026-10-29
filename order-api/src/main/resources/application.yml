@@ -39,6 +39,11 @@ spring:
 server:
   shutdown: graceful
 
+springdoc:
+  override-with-generic-response: false
+  swagger-ui:
+    path: /swagger-ui.html
+
 management:
   endpoints:
     web:

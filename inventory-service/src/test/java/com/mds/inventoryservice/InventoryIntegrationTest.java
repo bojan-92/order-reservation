@@ -83,6 +83,19 @@ class InventoryIntegrationTest {
     private AppProperties props;
 
     @Test
+    void openApiDocs_describeTheReadOnlyApi() throws Exception {
+        mockMvc.perform(get("/v3/api-docs"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.info.title").value("Inventory Service"))
+                .andExpect(jsonPath("$.paths['/stock-items'].get").exists())
+                .andExpect(jsonPath("$.paths['/stock-items/{itemId}'].get.responses['404']").exists())
+                .andExpect(jsonPath("$.paths['/reservations/{orderId}'].get.responses['404']").exists());
+
+        mockMvc.perform(get("/swagger-ui/index.html"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
     void orderWithEnoughStock_isReservedAndResultPublished() {
         String itemId = givenStock(5);
         String orderId = newId();

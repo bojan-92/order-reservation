@@ -25,8 +25,6 @@ spring:
       mandatory: true
     listener:
       simple:
-        # Safe to run in parallel: stock is decremented with a conditional UPDATE and
-        # duplicates are caught by the reservations primary key.
         concurrency: 2
         max-concurrency: 4
         prefetch: 20
@@ -44,6 +42,11 @@ spring:
 server:
   port: 8081
   shutdown: graceful
+
+springdoc:
+  override-with-generic-response: false
+  swagger-ui:
+    path: /swagger-ui.html
 
 management:
   endpoints:

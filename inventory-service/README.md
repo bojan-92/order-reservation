@@ -16,6 +16,8 @@ docker compose up -d --build
 | REST API        | http://localhost:8081                     |
 | Health          | http://localhost:8081/actuator/health     |
 | Metrics         | http://localhost:8081/actuator/prometheus |
+| Swagger UI      | http://localhost:8081/swagger-ui.html     |
+| OpenAPI         | http://localhost:8081/v3/api-docs         |
 | RabbitMQ UI     | http://localhost:15672 (`app` / `app`)    |
 
 Seed stock (Flyway `V4`): `item-1` = 10, `item-2` = 5, `item-3` = 0.

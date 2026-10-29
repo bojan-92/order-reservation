@@ -25,6 +25,8 @@ Stop the `order-api` container first (`docker compose stop order-api`), because 
 | REST API    | http://localhost:8080/orders              |
 | Health      | http://localhost:8080/actuator/health     |
 | Metrics     | http://localhost:8080/actuator/prometheus |
+| Swagger UI  | http://localhost:8080/swagger-ui.html     |
+| OpenAPI     | http://localhost:8080/v3/api-docs         |
 | RabbitMQ UI | http://localhost:15672 (`app` / `app`)    |
 
 Tests (Docker is required for Testcontainers): `./gradlew test`

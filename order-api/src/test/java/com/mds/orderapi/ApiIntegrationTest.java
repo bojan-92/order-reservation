@@ -85,6 +85,21 @@ class ApiIntegrationTest {
     private AppProperties props;
 
     @Test
+    void openApiDocs_describeEachEndpointWithItsOwnResponses() throws Exception {
+        mockMvc.perform(get("/v3/api-docs"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.info.title").value("Order API"))
+                .andExpect(jsonPath("$.paths['/orders'].post.responses['202']").exists())
+                .andExpect(jsonPath("$.paths['/orders'].post.responses['409']").exists())
+                .andExpect(jsonPath("$.paths['/orders'].post.parameters[?(@.name == 'X-Correlation-Id')]").exists())
+                .andExpect(jsonPath("$.paths['/orders/{orderId}'].get.responses['404']").exists())
+                .andExpect(jsonPath("$.paths['/orders/{orderId}'].get.responses['409']").doesNotExist());
+
+        mockMvc.perform(get("/swagger-ui/index.html"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
     void postOrder_storesOrderAndPublishesOrderPlacedEvent() throws Exception {
         String orderId = newOrderId();
 
