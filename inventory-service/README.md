@@ -22,9 +22,9 @@ Seed stock (Flyway `V4`): `item-1` = 10, `item-2` = 5, `item-3` = 0.
 
 ```bash
 curl -XPOST localhost:8080/orders -H 'Content-Type: application/json' \
-     -H 'X-Correlation-Id: demo-1' -d '{"orderId":"o-1","itemId":"item-1","quantity":2}'
-curl localhost:8080/orders/o-1          # PENDING -> RESERVED
-curl localhost:8081/reservations/o-1    # inventory's view of the same order
+     -H 'X-Correlation-Id: demo-1' -d '{"orderId":"ord1","itemId":"item-1","quantity":2}'
+curl localhost:8080/orders/ord1          # PENDING -> RESERVED
+curl localhost:8081/reservations/ord1    # inventory's view of the same order
 curl localhost:8081/stock-items         # item-1 is now 8
 curl localhost:8081/stock-items/item-1
 ```
