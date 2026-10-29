@@ -57,18 +57,18 @@ Inventory starts with seed stock: `item-1` = 10, `item-2` = 5, `item-3` = 0.
 ```bash
 # Enough stock -> RESERVED
 curl -XPOST localhost:8080/orders -H 'Content-Type: application/json' \
-     -H 'X-Correlation-Id: demo-1' -d '{"orderId":"o-1","itemId":"item-1","quantity":2}'
+     -H 'X-Correlation-Id: demo-1' -d '{"orderId":"ord1","itemId":"item-1","quantity":2}'
 
 # No stock -> REJECTED / INSUFFICIENT_STOCK
 curl -XPOST localhost:8080/orders -H 'Content-Type: application/json' \
-     -d '{"orderId":"o-2","itemId":"item-3","quantity":1}'
+     -d '{"orderId":"ord2","itemId":"item-3","quantity":1}'
 
 # Unknown item -> REJECTED / UNKNOWN_ITEM
 curl -XPOST localhost:8080/orders -H 'Content-Type: application/json' \
-     -d '{"orderId":"o-3","itemId":"ghost","quantity":1}'
+     -d '{"orderId":"ord3","itemId":"ghost","quantity":1}'
 
-curl localhost:8080/orders/o-1           # status: PENDING, then RESERVED about a second later
-curl localhost:8081/reservations/o-1     # inventory's record of the same order
+curl localhost:8080/orders/ord1           # status: PENDING, then RESERVED about a second later
+curl localhost:8081/reservations/ord1     # inventory's record of the same order
 curl localhost:8081/stock-items          # item-1 is now 8
 ```
 
