@@ -1,4 +1,4 @@
-# MDS orders: event-driven order and inventory services
+# MDS orders: event-driven order-api and inventory-service
 
 Two independent Spring Boot services that communicate only through RabbitMQ:
 
